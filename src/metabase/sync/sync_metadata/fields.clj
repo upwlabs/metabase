@@ -16,9 +16,30 @@
              [interface :as i]
              [util :as sync-util]]
             [metabase.util :as u]
-            [metabase.util.schema :as su]
+            [metabase.util
+             [schema :as su]
+             [metrics :as um]]
+            [metrics
+             [histograms :refer [defhistogram update!]]
+             [meters :refer [defmeter mark!]]
+             [timers :refer [deftimer time!]]]
             [schema.core :as s]
             [toucan.db :as db]))
+
+(deftimer um/reg sync-fields-timer)
+(deftimer um/reg sync-and-update-fields-for-db-timer)
+(deftimer um/reg sync-and-update-fields-for-table-timer)
+(deftimer um/reg update-metadata-timer)
+
+(defmeter um/reg update-database-type-count)
+(defmeter um/reg update-base-type-count)
+(defmeter um/reg retired-field-count)
+(defmeter um/reg update-field-metadata-count)
+
+(defhistogram um/reg fields-per-table-hist)
+(defhistogram um/reg tables-per-db-hist)
+(defhistogram um/reg new-fields-hist)
+(defhistogram um/reg existing-fields-hist)
 
 (def ^:private ParentID (s/maybe su/IntGreaterThanZero))
 
@@ -122,12 +143,14 @@
         {new-database-type :database-type, new-base-type :base-type} field-metadata]
     ;; If the driver is reporting a different `database-type` than what we have recorded in the DB, update it
     (when-not (= old-database-type new-database-type)
+      (mark! update-database-type-count)
       (log/info (format "Database type of %s has changed from '%s' to '%s'."
                         (field-metadata-name-for-logging table metabase-field)
                         old-database-type new-database-type))
       (db/update! Field (u/get-id metabase-field), :database_type new-database-type))
     ;; Now do the same for `base-type`
     (when-not (= old-base-type new-base-type)
+      (mark! update-base-type-count)
       (log/info (format "Base type of %s has changed from '%s' to '%s'."
                         (field-metadata-name-for-logging table metabase-field)
                         old-base-type new-base-type))
@@ -142,6 +165,9 @@
   "Mark an OLD-FIELD belonging to TABLE as inactive if corresponding Field object exists."
   [table :- i/TableInstance, old-field :- TableMetadataFieldWithID]
   (log/info (format "Marking %s as inactive." (field-metadata-name-for-logging table old-field)))
+
+  (mark! retired-field-count)
+
   (db/update! Field (:id old-field)
     :active false)
   ;; Now recursively mark and nested fields as inactive
@@ -188,6 +214,9 @@
               fields-to-update (filter known-field-pred db-field-chunk)
               new-fields       (remove known-field-pred db-field-chunk)]
 
+          (update! existing-fields-hist (count fields-to-update))
+          (update! new-fields-hist      (count new-fields))
+
           (update-field-chunk! table known-fields fields-to-update)
           ;; otherwise if field doesn't exist, create or reactivate it
           (when (seq new-fields)
@@ -228,6 +257,9 @@
                         ;; should not overwrite a special_type that is already present (could have been specified by
                         ;; the user).
                         (and (not (:special_type field)) new-special-type)))]
+
+      (mark! update-field-metadata-count)
+
       ;; update special type if one came back from DB metadata but Field doesn't currently have one
       (db/update! Field (u/get-id field)
                   (merge {:base_type (:base-type db-field)}
@@ -305,14 +337,23 @@
   ([database :- i/DatabaseInstance, table :- i/TableInstance]
    (sync-util/with-error-handling (format "Error syncing fields for %s" (sync-util/name-for-logging table))
      (let [db-metadata (db-metadata database table)]
+
+       (update! fields-per-table-hist (count db-metadata))
+
        ;; make sure the instances of Field are in-sync
-       (sync-field-instances! table db-metadata (our-metadata table) nil)
+       (time! sync-fields-timer
+              (sync-field-instances! table db-metadata (our-metadata table) nil))
        ;; now that tables are synced and fields created as needed make sure field properties are in sync
-       (update-metadata! table db-metadata nil)))))
+       (time! update-metadata-timer
+              (update-metadata! table db-metadata nil))))))
 
 
 (s/defn sync-fields!
   "Sync the Fields in the Metabase application database for all the Tables in a DATABASE."
   [database :- i/DatabaseInstance]
-  (doseq [table (sync-util/db->sync-tables database)]
-    (sync-fields-for-table! database table)))
+  (time! sync-and-update-fields-for-db-timer
+         (let [tables (sync-util/db->sync-tables database)]
+           (update! tables-per-db-hist (count tables))
+           (doseq [table tables]
+             (time! sync-and-update-fields-for-table-timer
+                    (sync-fields-for-table! database table))))))
