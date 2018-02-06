@@ -1,10 +1,9 @@
 /* eslint "react/prop-types": "warn" */
 import React from "react";
 import PropTypes from "prop-types";
-import { t } from 'c-3po';
+import { t, ngettext, msgid } from 'c-3po';
 import { isQueryable } from "metabase/lib/table";
 
-import inflection from "inflection";
 import cx from "classnames";
 
 const MainPane = ({ databases, show }) =>
@@ -16,7 +15,9 @@ const MainPane = ({ databases, show }) =>
                 <li key={database.id}>
                     <div className="my2">
                         <h2 className="inline-block">{database.name}</h2>
-                        <span className="ml1">{database.tables.length + " " + inflection.inflect("table", database.tables.length)}</span>
+                        <span className="ml1">
+                            {(n => ngettext(msgid`${n} table`, `${n} tables`, n))(database.tables.length)}
+                        </span>
                     </div>
                     <ul>
                         {database.tables.filter(isQueryable).map((table, index) =>
