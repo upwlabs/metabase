@@ -2,14 +2,17 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { t } from 'c-3po';
+import cx from "classnames";
+
+// components
 import QueryButton from "metabase/components/QueryButton.jsx";
+import Expandable from "metabase/components/Expandable.jsx";
+
+// lib
 import { createCard } from "metabase/lib/card";
 import { createQuery } from "metabase/lib/query";
 import { foreignKeyCountsByOriginTable } from 'metabase/lib/schema_metadata';
-import inflection from 'inflection';
-import cx from "classnames";
-
-import Expandable from "metabase/components/Expandable.jsx";
+import { inflect } from 'metabase/lib/formatting';
 
 export default class TablePane extends Component {
     constructor(props, context) {
@@ -72,7 +75,8 @@ export default class TablePane extends Component {
             };
             var tabs = Object.entries(panes).map(([name, count]) =>
                 <a key={name} className={cx("Button Button--small", { "Button--active": name === this.state.pane })} onClick={this.showPane.bind(null, name)}>
-                    <span className="DataReference-paneCount">{count}</span><span>{inflection.inflect(name, count)}</span>
+                    <span className="DataReference-paneCount">{count}</span>
+                    <span>{inflect(name, count)}</span>
                 </a>
             );
 

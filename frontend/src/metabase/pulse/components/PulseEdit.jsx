@@ -2,7 +2,7 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router";
-import { t, jt } from 'c-3po';
+import { t, jt, ngettext, msgid } from 'c-3po';
 
 import PulseEditName from "./PulseEditName.jsx";
 import PulseEditCards from "./PulseEditCards.jsx";
@@ -21,7 +21,6 @@ import { pulseIsValid, cleanPulse, emailIsEnabled } from "metabase/lib/pulse";
 
 import _ from "underscore";
 import cx from "classnames";
-import { inflect } from "inflection";
 
 export default class PulseEdit extends Component {
     constructor(props) {
@@ -78,7 +77,7 @@ export default class PulseEdit extends Component {
     getConfirmItems() {
         return this.props.pulse.channels.map((c, index) =>
             c.channel_type === "email" ?
-                <span key={index}>{jt`This pulse will no longer be emailed to ${<strong>{c.recipients.length} {inflect("address", c.recipients.length)}</strong>} ${<strong>{c.schedule_type}</strong>}`}.</span>
+                <span key={index}>{jt`This pulse will no longer be emailed to ${<strong>{(n => ngettext(msgid`${n} address`, `${n} addresses`, n))(c.recipients.length)}</strong>} ${<strong>{c.schedule_type}</strong>}`}.</span>
             : c.channel_type === "slack" ?
                 <span key={index}>{jt`Slack channel ${<strong>{c.details && c.details.channel}</strong>} will no longer get this pulse ${<strong>{c.schedule_type}</strong>}`}.</span>
             :

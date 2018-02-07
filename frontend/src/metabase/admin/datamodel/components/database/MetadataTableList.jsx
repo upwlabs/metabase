@@ -3,8 +3,7 @@ import PropTypes from "prop-types";
 
 import ProgressBar from "metabase/components/ProgressBar.jsx";
 import Icon from "metabase/components/Icon.jsx";
-import { t } from 'c-3po';
-import { inflect } from "metabase/lib/formatting";
+import { t, ngettext, msgid } from 'c-3po';
 
 import _ from "underscore";
 import cx from "classnames";
@@ -62,10 +61,14 @@ export default class MetadataTableList extends Component {
         }
 
         if (queryableTables.length > 0) {
-            queryableTablesHeader = <li className="AdminList-section">{queryableTables.length} Queryable {inflect("Table", queryableTables.length)}</li>;
+            queryableTablesHeader = <li className="AdminList-section">
+              {(n => ngettext(msgid`${n} Queryable Table`, `${n} Queryable Tables`, n))(queryableTables.length)}
+            </li>;
         }
         if (hiddenTables.length > 0) {
-            hiddenTablesHeader = <li className="AdminList-section">{hiddenTables.length} Hidden {inflect("Table", hiddenTables.length)}</li>;
+            hiddenTablesHeader = <li className="AdminList-section">
+              {(n => ngettext(msgid`${n} Hidden Table`, `${n} Hidden Tables`, n))(hiddenTables.length)}
+            </li>;
         }
         if (queryableTables.length === 0 && hiddenTables.length === 0) {
             queryableTablesHeader = <li className="AdminList-section">0 Tables</li>;

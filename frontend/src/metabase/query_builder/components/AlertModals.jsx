@@ -1,34 +1,47 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
+import { t, jt, ngettext, msgid } from "c-3po";
+import _ from "underscore";
+import cxs from 'cxs';
+
+// components
 import Button from "metabase/components/Button";
 import SchedulePicker from "metabase/components/SchedulePicker";
-import { connect } from "react-redux";
-import { createAlert, deleteAlert, updateAlert } from "metabase/alert/alert";
 import ModalContent from "metabase/components/ModalContent";
-import { getUser, getUserIsAdmin } from "metabase/selectors/user";
-import { getQuestion, getVisualizationSettings } from "metabase/query_builder/selectors";
-import _ from "underscore";
-import PulseEditChannels from "metabase/pulse/components/PulseEditChannels";
-import { fetchPulseFormInput, fetchUsers } from "metabase/pulse/actions";
-import {
-    formInputSelector, hasConfiguredAnyChannelSelector, hasConfiguredEmailChannelSelector, hasLoadedChannelInfoSelector,
-    userListSelector
-} from "metabase/pulse/selectors";
 import DeleteModalWithConfirm from "metabase/components/DeleteModalWithConfirm";
 import ModalWithTrigger from "metabase/components/ModalWithTrigger";
-import { inflect } from "metabase/lib/formatting";
+import Radio from "metabase/components/Radio";
+import Icon from "metabase/components/Icon";
+import ChannelSetupModal from "metabase/components/ChannelSetupModal";
+import ButtonWithStatus from "metabase/components/ButtonWithStatus";
+import PulseEditChannels from "metabase/pulse/components/PulseEditChannels";
+import RetinaImage from "react-retina-image";
+
+// actions
+import { createAlert, deleteAlert, updateAlert } from "metabase/alert/alert";
+import { apiUpdateQuestion } from "metabase/query_builder/actions";
+import { fetchPulseFormInput, fetchUsers } from "metabase/pulse/actions";
+
+// selectors
+import { getUser, getUserIsAdmin } from "metabase/selectors/user";
+import { getQuestion, getVisualizationSettings } from "metabase/query_builder/selectors";
+import {
+    formInputSelector,
+    hasConfiguredAnyChannelSelector,
+    hasConfiguredEmailChannelSelector,
+    hasLoadedChannelInfoSelector,
+    userListSelector
+} from "metabase/pulse/selectors";
+
+// lib
 import {
     ALERT_TYPE_PROGRESS_BAR_GOAL, ALERT_TYPE_ROWS, ALERT_TYPE_TIMESERIES_GOAL,
     getDefaultAlert
 } from "metabase-lib/lib/Alert";
-import type { AlertType } from "metabase-lib/lib/Alert";
-import Radio from "metabase/components/Radio";
-import RetinaImage from "react-retina-image";
-import Icon from "metabase/components/Icon";
 import MetabaseCookies from "metabase/lib/cookies";
-import cxs from 'cxs';
-import ChannelSetupModal from "metabase/components/ChannelSetupModal";
-import ButtonWithStatus from "metabase/components/ButtonWithStatus";
-import { apiUpdateQuestion } from "metabase/query_builder/actions";
+
+// types
+import type { AlertType } from "metabase-lib/lib/Alert";
 
 const getScheduleFromChannel = (channel) =>
     _.pick(channel, "schedule_day", "schedule_frame", "schedule_hour", "schedule_type")
@@ -285,7 +298,7 @@ export class DeleteAlertSection extends Component {
         // same as in PulseEdit but with some changes to copy
         return this.props.alert.channels.map(c =>
             c.channel_type === "email" ?
-                <span>{jt`This alert will no longer be emailed to ${<strong>{c.recipients.length} {inflect("address", c.recipients.length)}</strong>}.`}</span>
+                <span>{jt`This alert will no longer be emailed to ${<strong>{(n => ngettext(msgid`${n} address`, `${n} addresses`, n))(c.recipients.length)}</strong>}.`}</span>
                 : c.channel_type === "slack" ?
                 <span>{jt`Slack channel ${<strong>{c.details && c.details.channel}</strong>} will no longer get this alert.`}</span>
                 :

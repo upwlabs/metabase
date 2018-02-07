@@ -1,12 +1,10 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { t } from 'c-3po';
+import { t, ngettext, msgid } from 'c-3po';
 import HeaderWithBack from "metabase/components/HeaderWithBack";
 
 import ExpandingSearchField from "../components/ExpandingSearchField";
 import EntityList from "./EntityList";
-
-import { inflect } from "metabase/lib/formatting";
 
 import { getTotalCount } from "../selectors";
 import { search } from "../questions";
@@ -38,7 +36,7 @@ class SearchResults extends Component {
             <div className="px4 pt3">
                 <div className="flex align-center mb3">
                     <HeaderWithBack name={totalCount != null ?
-                        `${totalCount} ${inflect("result", totalCount)}` :
+                        ngettext(msgid`${totalCount} result`, `${totalCount} results`, totalCount) :
                         t`Search results`}
                     />
                 </div>

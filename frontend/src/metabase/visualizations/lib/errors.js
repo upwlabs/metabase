@@ -1,18 +1,18 @@
 /* @flow */
 
 import { inflect } from "metabase/lib/formatting";
-import { t } from 'c-3po';
+import { t, ngettext, msgid } from 'c-3po';
 // NOTE: extending Error with Babel requires babel-plugin-transform-builtin-extend
 
 export class MinColumnsError extends Error {
     constructor(minColumns: number, actualColumns: number) {
-        super(t`Doh! The data from your query doesn't fit the chosen display choice. This visualization requires at least ${actualColumns} ${inflect("column", actualColumns)} of data.`);
+        super(t`Doh! The data from your query doesn't fit the chosen display choice. This visualization requires at least ${actualColumns} ${ngettext(msgid`column`, `columns`, actualColumns)} of data.`);
     }
 }
 
 export class MinRowsError extends Error {
     constructor(minRows: number, actualRows: number) {
-        super(t`No dice. We have ${actualRows} data ${inflect("point", actualRows)} to show and that's not enough for this visualization.`);
+        super(t`No dice. We have ${actualRows} data ${ngettext(msgid`point`, `points`, actualRows)} to show and that's not enough for this visualization.`);
     }
 }
 

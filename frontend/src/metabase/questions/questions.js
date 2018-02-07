@@ -1,21 +1,25 @@
-
-import {createAction, createThunkAction, mergeEntities, momentifyArraysTimestamps} from "metabase/lib/redux";
-
+import React from "react";
+import { Link } from "react-router";
+import { push, replace } from "react-router-redux";
+import { t, jt, ngettext, msgid } from "c-3po";
 import { normalize, schema } from "normalizr";
 import { getIn, assocIn, updateIn, chain } from "icepick";
 import _ from "underscore";
 
-import { inflect } from "metabase/lib/formatting";
+// actions
+import {createAction, createThunkAction, mergeEntities, momentifyArraysTimestamps} from "metabase/lib/redux";
+import { setRequestState } from "metabase/redux/requests";
+import { addUndo } from "metabase/redux/undo";
+import { SET_COLLECTION_ARCHIVED } from "./collections";
+
+// selectors
+import { getVisibleEntities, getSelectedEntities } from "./selectors";
+
+// lib
 import MetabaseAnalytics from "metabase/lib/analytics";
 import * as Urls from "metabase/lib/urls";
 
-import { push, replace } from "react-router-redux";
-import { setRequestState } from "metabase/redux/requests";
-import { addUndo } from "metabase/redux/undo";
-
-import { getVisibleEntities, getSelectedEntities } from "./selectors";
-
-import { SET_COLLECTION_ARCHIVED } from "./collections";
+import { CardApi, CollectionsApi } from "metabase/services";
 
 const label = new schema.Entity('labels');
 const collection = new schema.Entity('collections');
@@ -23,8 +27,6 @@ const card = new schema.Entity('cards', {
   labels: [label],
   // collection: collection
 });
-
-import { CardApi, CollectionsApi } from "metabase/services";
 
 export const LOAD_ENTITIES = 'metabase/questions/LOAD_ENTITIES';
 const SET_SEARCH_TEXT = 'metabase/questions/SET_SEARCH_TEXT';
@@ -70,9 +72,6 @@ export const setFavorited = createThunkAction(SET_FAVORITED, (cardId, favorited)
     }
 });
 
-import React from "react";
-import { Link } from "react-router";
-import { t } from 'c-3po';
 function createUndo(type, actions, collection) {
     return {
         type: type,
@@ -80,7 +79,7 @@ function createUndo(type, actions, collection) {
         message: (undo) => // eslint-disable-line react/display-name
             <div className="flex flex-column">
                 <div>
-                    { inflect(null, undo.count, t`${undo.count} question was ${type}`, t`${undo.count} questions were ${type}`) }
+                    { ngettext(msgid`${undo.count} question was ${type}`, `${undo.count} questions were ${type}`, undo.count) }
                     { undo.count === 1 && collection &&
                         <span> {t`to the`} <Link className="link" to={Urls.collection(collection)}>{collection.name}</Link> {t`collection`}.</span>
                     }
