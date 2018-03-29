@@ -16,7 +16,9 @@
              [interface :as mi]
              [table :as table :refer [Table]]]
             [metabase.related :as related]
-            [metabase.sync.field-values :as sync-field-values]
+            [metabase.sync
+             [field-values :as sync-field-values]
+             [sync-metadata :as sync-metadata]]
             [metabase.util.schema :as su]
             [schema.core :as s]
             [puppetlabs.i18n.core :refer [trs tru]]
@@ -337,5 +339,13 @@
   "Return related entities."
   [id]
   (-> id Table api/read-check related/related))
+
+(api/defendpoint POST "/:id/sync_schema"
+  "Trigger a manual update of the schema metadata for this `Table`."
+  [id]
+  (api/check-superuser)
+  (future
+    (sync-metadata/sync-table-metadata! (api/check-404 (Table id))))
+  {:status :success})
 
 (api/define-routes)

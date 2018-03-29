@@ -14,7 +14,11 @@ import {
 } from "metabase/admin/datamodel/containers/FieldApp";
 import ActionButton from "metabase/components/ActionButton.jsx";
 
-import { rescanTableFieldValues, discardTableFieldValues } from "../table";
+import {
+  rescanTableFieldValues,
+  discardTableFieldValues,
+  syncTableSchema
+} from "../table";
 
 const mapStateToProps = (state, props) => {
   return {
@@ -29,6 +33,7 @@ const mapDispatchToProps = {
   fetchTableMetadata: metadataActions.fetchTableMetadata,
   rescanTableFieldValues,
   discardTableFieldValues,
+  syncTableSchema
 };
 
 @connect(mapStateToProps, mapDispatchToProps)
@@ -58,6 +63,11 @@ export default class TableSettingsApp extends Component {
           <div className="relative">
             <div className="wrapper wrapper--trim">
               <Nav db={db} table={table} />
+              <SyncTableSchema
+                syncTableSchema={() =>
+                  this.props.syncTableSchema(table.id)
+                }
+              />
               <UpdateFieldValues
                 rescanTableFieldValues={() =>
                   this.props.rescanTableFieldValues(table.id)
@@ -93,6 +103,27 @@ class Nav extends Component {
           />
         </div>
       </div>
+    );
+  }
+}
+
+class SyncTableSchema extends Component {
+  render() {
+    return (
+      <Section>
+        <SectionHeader
+          title={t`Sync table schema`}
+          description={t`Fetch latest schema changes of this table.`}
+        />
+        <ActionButton
+          className="Button mr2"
+          actionFn={this.props.syncTableSchema}
+          normalText={t`Sync table schema`}
+          activeText={t`Starting…`}
+          failedText={t`Failed to start sync`}
+          successText={t`Sync triggered!`}
+        />
+      </Section>
     );
   }
 }
