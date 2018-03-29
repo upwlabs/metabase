@@ -109,6 +109,10 @@
     "*OPTIONAL*. Keyword name of the SQL function that should be used to do a standard deviation aggregation. Defaults
      to `:STDDEV`.")
 
+  (median-fn ^clojure.lang.Keyword [this]
+    "*OPTIONAL*. Keyword name of the SQL function that should be used to do a median aggregation. Defaults
+     to `:MEDIAN`.")
+
   (string-length-fn ^clojure.lang.Keyword [this, ^Keyword field-key]
     "Return a HoneySQL form appropriate for getting the length of a `Field` identified by fully-qualified FIELD-KEY.
      An implementation should return something like:
@@ -464,7 +468,8 @@
    :field->alias         (u/drop-first-arg name)
    :quote-style          (constantly :ansi)
    :set-timezone-sql     (constantly nil)
-   :stddev-fn            (constantly :STDDEV)})
+   :stddev-fn            (constantly :STDDEV)
+   :median-fn            (constantly :MEDIAN)})
 
 
 (defn IDriverSQLDefaultsMixin

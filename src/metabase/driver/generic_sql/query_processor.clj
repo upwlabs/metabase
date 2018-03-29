@@ -137,6 +137,7 @@
     ;; aggregation clauses w/ a Field
     (hsql/call (case aggregation-type
                  :avg      :avg
+                 :median   (sql/median-fn driver)
                  :count    :count
                  :distinct :distinct-count
                  :stddev   (sql/stddev-fn driver)

@@ -444,7 +444,7 @@
   nil
   :load-ns true)
 
-(s/defrecord AggregationWithField [aggregation-type :- (s/named (s/enum :avg :count :cumulative-sum :distinct :max
+(s/defrecord AggregationWithField [aggregation-type :- (s/named (s/enum :avg :median :count :cumulative-sum :distinct :max
                                                                         :min :stddev :sum)
                                                                 "Valid aggregation type")
                                    field            :- (s/cond-pre AnyField
@@ -456,6 +456,8 @@
 (defn- valid-aggregation-for-driver? [{:keys [aggregation-type]}]
   (when (= aggregation-type :stddev)
     (assert-driver-supports :standard-deviation-aggregations))
+  (when (= aggregation-type :median)
+    (assert-driver-supports :median-aggregations))
   true)
 
 (def Aggregation
@@ -463,7 +465,7 @@
   (s/constrained
    (s/cond-pre AggregationWithField AggregationWithoutField Expression)
    valid-aggregation-for-driver?
-   "standard-deviation-aggregations is not supported by this driver."))
+   "Aggregation type is not supported by this driver."))
 
 
 ;;; filter
