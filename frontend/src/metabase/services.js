@@ -179,6 +179,7 @@ export const MetabaseApi = {
     },
   ),
   // table_sync_metadata:        POST("/api/table/:tableId/sync"),
+  table_sync_schema: POST("/api/table/:tableId/sync_schema"),
   table_rescan_values: POST("/api/table/:tableId/rescan_values"),
   table_discard_values: POST("/api/table/:tableId/discard_values"),
   field_get: GET("/api/field/:fieldId"),

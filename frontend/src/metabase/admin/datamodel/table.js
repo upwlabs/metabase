@@ -3,9 +3,27 @@ import { createThunkAction } from "metabase/lib/redux";
 import MetabaseAnalytics from "metabase/lib/analytics";
 import { MetabaseApi } from "metabase/services";
 
+export const SYNC_TABLE_SCHEMA = "metabase/admin/tables/SYNC_TABLE_SCHEMA";
 export const RESCAN_TABLE_VALUES = "metabase/admin/tables/RESCAN_TABLE_VALUES";
-export const DISCARD_TABLE_VALUES =
-  "metabase/admin/tables/DISCARD_TABLE_VALUES";
+export const DISCARD_TABLE_VALUES = "metabase/admin/tables/DISCARD_TABLE_VALUES";
+
+export const syncTableSchema = createThunkAction(
+  SYNC_TABLE_SCHEMA,
+  function(tableId) {
+    return async function(dispatch, getState) {
+      try {
+        let call = await MetabaseApi.table_sync_schema({ tableId });
+        MetabaseAnalytics.trackEvent(
+          "Data Model",
+          "Manual Sync Table Schema",
+        );
+        return call;
+      } catch (error) {
+        console.log("error manually sync table schema", error);
+      }
+    };
+  },
+);
 
 export const rescanTableFieldValues = createThunkAction(
   RESCAN_TABLE_VALUES,
