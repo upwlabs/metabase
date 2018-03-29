@@ -228,6 +228,7 @@
         (m/dissoc-in [:db :details])
         (assoc-dimension-options driver)
         format-fields-for-response
+        (update :fields (partial filter :active))
         (update :fields (if (Boolean/parseBoolean include_sensitive_fields)
                           ;; If someone passes include_sensitive_fields return hydrated :fields as-is
                           identity

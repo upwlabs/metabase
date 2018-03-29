@@ -203,6 +203,7 @@
                         (for [table tables
                               :when (mi/can-read? table)]
                           (-> table
+                              (update :fields   (partial filter :active))
                               (update :segments (partial filter mi/can-read?))
                               (update :metrics  (partial filter mi/can-read?))))))))
 
