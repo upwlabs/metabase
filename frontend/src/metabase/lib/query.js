@@ -21,7 +21,7 @@ export const NEW_QUERY_TEMPLATES = {
     database: null,
     type: "query",
     query: {
-      source_table: null,
+      "source-table": null,
     },
   },
   native: {
@@ -41,7 +41,7 @@ export function createQuery(type = "query", databaseId, tableId) {
   }
 
   if (type === "query" && databaseId && tableId) {
-    dataset_query.query.source_table = tableId;
+    dataset_query.query["source-table"] = tableId;
   }
 
   return dataset_query;
@@ -92,7 +92,7 @@ const Query = {
   canRun(query, tableMetadata) {
     if (
       !query ||
-      query.source_table == null ||
+      query["source-table"] == null ||
       !Query.hasValidAggregation(query)
     ) {
       return false;
@@ -145,18 +145,18 @@ const Query = {
       _.all(filter, a => a != null),
     );
     if (filters.length > 0) {
-      query.filter = ["AND", ...filters];
+      query.filter = ["and", ...filters];
     } else {
       delete query.filter;
     }
 
-    if (query.order_by) {
-      query.order_by = query.order_by
+    if (query["order-by"]) {
+      query["order-by"] = query["order-by"]
         .map(s => {
-          let field = s[0];
+          const [direction, field] = s;
 
           // remove incomplete sorts
-          if (!Query.isValidField(field) || s[1] == null) {
+          if (!Query.isValidField(field) || direction == null) {
             return null;
           }
 
@@ -176,17 +176,17 @@ const Query = {
               Query.isSameField(b, field, false),
             );
             if (targetMatches.length > 0) {
-              // query processor expect the order_by clause to match the breakout's datetime-field unit or fk-> target,
+              // query processor expect the order-by clause to match the breakout's datetime-field unit or fk-> target,
               // so just replace it with the one that matches the target field
               // NOTE: if we have more than one breakout for the same target field this could match the wrong one
               if (targetMatches.length > 1) {
                 console.warn(
                   "Sort clause matches more than one breakout field",
-                  s[0],
+                  field,
                   targetMatches,
                 );
               }
-              return [targetMatches[0], s[1]];
+              return [direction, targetMatches[0]];
             }
           } else if (Query.isBareRows(query)) {
             return s;
@@ -197,8 +197,8 @@ const Query = {
         })
         .filter(s => s != null);
 
-      if (query.order_by.length === 0) {
-        delete query.order_by;
+      if (query["order-by"].length === 0) {
+        delete query["order-by"];
       }
     }
 
@@ -250,7 +250,7 @@ const Query = {
   },
 
   isSegmentFilter(filter) {
-    return Array.isArray(filter) && filter[0] === "SEGMENT";
+    return Array.isArray(filter) && filter[0] === "segment";
   },
 
   canAddLimitAndSort(query) {
@@ -677,8 +677,8 @@ const Query = {
   },
 
   getFilterDescription(tableMetadata, query, options) {
-    // getFilters returns list of filters without the implied "AND"
-    let filters = ["AND"].concat(Query.getFilters(query));
+    // getFilters returns list of filters without the implied "and"
+    let filters = ["and"].concat(Query.getFilters(query));
     if (filters && filters.length > 1) {
       return [
         t`Filtered by `,
@@ -688,12 +688,12 @@ const Query = {
   },
 
   getFilterClauseDescription(tableMetadata, filter, options) {
-    if (mbqlEq(filter[0], "AND") || mbqlEq(filter[0], "OR")) {
+    if (mbqlEq(filter[0], "and") || mbqlEq(filter[0], "or")) {
       let clauses = filter
         .slice(1)
         .map(f => Query.getFilterClauseDescription(tableMetadata, f, options));
       return conjunctList(clauses, filter[0].toLowerCase());
-    } else if (filter[0] === "SEGMENT") {
+    } else if (filter[0] === "segment") {
       let segment = _.findWhere(tableMetadata.segments, { id: filter[1] });
       let name = segment ? segment.name : "[Unknown Segment]";
       return options.jsx ? (
@@ -706,13 +706,17 @@ const Query = {
     }
   },
 
-  getOrderByDescription(tableMetadata, { order_by }, options) {
-    if (order_by && order_by.length > 0) {
+  getOrderByDescription(tableMetadata, query, options) {
+    const orderBy = query["order-by"];
+    if (orderBy && orderBy.length > 0) {
       return [
         t`Sorted by `,
         joinList(
-          order_by.map(
-            o => Query.getFieldName(tableMetadata, o[0], options) + " " + o[1],
+          orderBy.map(
+            ([direction, field]) =>
+              Query.getFieldName(tableMetadata, field, options) +
+              " " +
+              (direction === "asc" ? "ascending" : "descending"),
           ),
           " and ",
         ),
@@ -738,7 +742,7 @@ const Query = {
         "aggregation",
         "breakout",
         "filter",
-        "order_by",
+        "order-by",
         "limit",
       ],
       ...options,
@@ -749,7 +753,7 @@ const Query = {
       aggregation: Query.getAggregationDescription,
       breakout: Query.getBreakoutDescription,
       filter: Query.getFilterDescription,
-      order_by: Query.getOrderByDescription,
+      "order-by": Query.getOrderByDescription,
       limit: Query.getLimitDescription,
     };
 
@@ -933,7 +937,7 @@ export const AggregationClause = {
       aggregation &&
       aggregation.length > 0 &&
       aggregation[0] &&
-      aggregation[0] !== "METRIC"
+      aggregation[0] !== "metric"
     ) {
       return [aggregation[0], fieldId];
     } else {
